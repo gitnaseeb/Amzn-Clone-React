@@ -1,0 +1,358 @@
+(async function () {
+    // @params: cname = (string) cookie name
+    function getCookie(cname) {
+      let name = cname + "=";
+      let decodedCookie = decodeURIComponent(document.cookie);
+      let ca = decodedCookie.split(";");
+      for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == " ") {
+          c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+          return c.substring(name.length, c.length);
+        }
+      }
+      return "";
+    }
+  
+    // @params: cname = (string) storage item name
+    function getStorageItem(cname) {
+      return localStorage.getItem(cname);
+    }
+  
+    // @params: cname = (string) storage item name
+    function removeStorageItem(cname) {
+      localStorage.removeItem(cname);
+    }
+  
+    // @params: cname = (string) storage item name
+    //          value = (string) storage item value
+    function setStorageItem(cname, value) {
+      localStorage.setItem(cname, value);
+    }
+  
+    // get opt-in storage item
+    const emailOptIn = getStorageItem("email_opt_in");
+  
+    // get registration form element
+    const form = document.getElementById("registration_confirmation_form");
+  
+    if (!!form) {
+      if (emailOptIn) {
+        // if, for some reason the email opt in is already set - unset it
+        removeStorageItem("email_opt_in");
+      }
+  
+      const submitBtn = form.querySelector('button.btn[type="submit"]');
+  
+      // remove the terms modal link
+      // Sometimes this node is not yet loaded when this code runs.
+      // Wait until it loads.
+      while (!document.getElementById("terms_of_service_modal")) {
+        await new Promise(r => setTimeout(r, 100));
+      }
+      // remove the terms modal link
+      document.getElementById("terms_of_service_modal").remove();
+      // trash the default personal_email field if it exists.
+      if (document.getElementById("pseudonym_personal_email")) {
+        document.getElementById("pseudonym_personal_email").parentNode.parentNode.remove();
+      }
+      const timezoneContainer = document.getElementById('user_time_zone').parentNode.parentNode;
+  
+      const all_html = /* html */`
+        <div class="control-group">
+          <div class="controls">
+              <label class="checkbox" style="margin-top: 0px;" for="optInAWSEmails">
+                  <input type="checkbox" name="email_opt_in" id="optInAWSEmails" class="checkbox">
+                  <span class="terms_of_service_link terms-of-service__link">
+                      Yes, I'd like Canvas to provide my contact information to
+                      <a href="https://aws.amazon.com/legal/marketingentities/" class="terms_link">Amazon Web Services</a>(AWS)
+                      so AWS can share the latest news about AWS services and related offerings with me by email, post or telephone.
+                      <div class="control-group" style="margin: 10px 0;padding: 0;">
+                          <label class="control-label" for="pseudonym_personal_email" style="width: auto;">Personal Email:</label>
+                          <div class="controls" style="width: min-content; float: left; margin-left: 20px;">
+                              <input type="text" name="pseudonym[personal_email]" id="pseudonym_personal_email" disabled="true">
+                              <div>
+                                  <span style="font-size: 0.6rem; font-weight: bold;">
+                                      Get the latest news and offers from AWS Academy.
+                                  </span>
+                              </div>
+                          </div>
+                      </div>
+                      You may unsubscribe from receiving AWS news and offers at any time by following the instructions
+                      in the communications received. AWS handles your information as described in the
+                      <a href="https://aws.amazon.com/privacy/" class="terms_link">AWS Privacy Notice</a>. Providing Canvas
+                      with your information may involve transferring it to another country. For questions about how Canvas
+                      will handle your information, please contact Canvas directly or refer to its privacy policy.
+                  </span>
+              </label>
+          </div>
+      </div>
+      `
+  
+      // append input container to form, before the submit button
+      $(all_html).insertAfter(timezoneContainer.nextSibling.nextSibling)
+  
+      // update terms content
+      const terms_html = /* html */`
+        <span class="terms_of_service_link terms-of-service__link">
+          I agree to the Canvas <a href="https://www.instructure.com/policies/acceptable-use" class="terms_link">Instructure Acceptable Use Policy</a>
+          and to the <a href="https://aws.amazon.com/legal/learner-terms-conditions/" class="terms_link">AWS Learner Terms and Conditions</a>
+          The information you provide will be handled by AWS as described in the <a href="https://aws.amazon.com/privacy/" class="terms_link">AWS Privacy Notice</a>.
+        </span>
+      `
+  
+      // move content into the label for display purposes
+      const termsLabel = form.querySelector(
+        'label[for="user_terms_of_use"].checkbox'
+      );
+      // remove default text node
+      termsLabel.lastChild.remove();
+      // add container to label
+      $(terms_html).appendTo(termsLabel);
+  
+      // set the email_opt_in localstorage item on checkbox value change
+      const checkbox = document.getElementById('optInAWSEmails');
+      checkbox.addEventListener("change", (event) => {
+        // update the storage item with the latest value
+        setStorageItem("email_opt_in", event.currentTarget.checked.toString());
+        if (event.currentTarget.checked) {
+          document.getElementById('pseudonym_personal_email').removeAttribute("disabled");
+        }
+        else {
+          document.getElementById('pseudonym_personal_email').value = "";
+          document.getElementById('pseudonym_personal_email').setAttribute("disabled", true);
+        }
+      });
+    } else if (emailOptIn) {
+      // If form doesn't exist, and the localstorage item 'email_opt_in' is setterms_of_service_link
+      // send the data to the custom_data API endpoint
+      // then remove the storage item
+      const token = getCookie("_csrf_token");
+      const json = {
+        ns: "com.unicon.canvas-app",
+        data: emailOptIn,
+      };
+      const headers = {
+        Accept: "application/json, text/plain, */*",
+        "Content-Type": "application/json",
+        "X-CSRF-TOKEN": token,
+      };
+  
+      fetch(
+        "/api/v1/users/self/custom_data/email_opt_in?ns=com.unicon.canvas-app",
+        {
+          method: "PUT",
+          headers: headers,
+          body: JSON.stringify(json),
+        }
+      )
+        .then(() => {
+          // remove storage item on submitting data
+          removeStorageItem("email_opt_in");
+        })
+        .catch((error) => console.error(error));
+    }
+  })();
+  
+  var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+  };
+  (function () {
+    var _a, _b;
+    return __awaiter(this, void 0, void 0, function* () {
+        const CONFIG = {
+            tool_id: 7653,
+            valid_origins: /^.*$/,
+            override_profile_show: false,
+        };
+        function url_params() {
+            const entries = new URLSearchParams(window.location.search);
+            const result = {};
+            for (const [key, value] of entries) {
+                result[key] = value;
+            }
+            return result;
+        }
+        function profile_url(mode) {
+            const u = new URL(window.location.toString());
+            u.pathname = `users/${ENV.current_user.id}/external_tools/${CONFIG.tool_id}`;
+            u.search = `aws_profile_view=${mode}`;
+            return String(u);
+        }
+        function profile_navigate(mode, replace) {
+            const u = profile_url(mode);
+            if (replace) {
+                window.location.replace(u);
+            }
+            else {
+                window.location = String(u);
+            }
+        }
+        function observe(element, opts, handler) {
+            let free;
+            let state = 0;
+            function refresh() {
+                return __awaiter(this, void 0, void 0, function* () {
+                    if (!state) {
+                        if (free)
+                            yield free();
+                        free = (yield handler(element)) || null;
+                        if (state == 2) {
+                            state = 0;
+                            refresh();
+                        }
+                        else {
+                            state = 0;
+                        }
+                    }
+                    else {
+                        state = 2;
+                    }
+                });
+            }
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    const newNodes = mutation.addedNodes;
+                    if (newNodes) {
+                        refresh();
+                    }
+                });
+            });
+            observer.observe(element, opts);
+        }
+        function wait_for_selector(sel, scope = document, timeout = 5000) {
+            return new Promise((accept, reject) => {
+                function check() {
+                    const jq = $(scope).find(sel);
+                    if (jq.length) {
+                        cleanup();
+                        accept(jq);
+                    }
+                }
+                function cleanup() {
+                    observer.disconnect();
+                    clearTimeout(timer);
+                    clearInterval(interval);
+                }
+                const observer = new MutationObserver((mutations) => check());
+                const timer = setTimeout(() => {
+                    cleanup();
+                    reject();
+                }, timeout);
+                const interval = setInterval(check, 100);
+            });
+        }
+        // Override the /profile page if it is accessed
+        if (CONFIG.override_profile_show && window.location.pathname == '/profile') {
+            // profile_navigate("view")
+        }
+        // Setup a postMessage API for the LTI to communicate with
+        window.addEventListener("message", (ev) => {
+            if (!ev.origin.match(CONFIG.valid_origins))
+                return;
+            if (ev.data == "aws.canvas_override.get_params") {
+                ev.source.postMessage(JSON.stringify({
+                    type: "aws.canvas_override.params",
+                    params: url_params(),
+                }), { targetOrigin: ev.origin });
+            }
+        });
+        (_b = (_a = document.getElementById("tool_content")) === null || _a === void 0 ? void 0 : _a.contentWindow) === null || _b === void 0 ? void 0 : _b.postMessage("aws.canvas_override.ready", "*");
+        if (CONFIG.override_profile_show) {
+            // Global Pop-open Sidebar
+            observe(document.getElementById("nav-tray-portal"), { childList: true }, (pel) => __awaiter(this, void 0, void 0, function* () {
+                const profile_button = yield wait_for_selector(`.navigation-tray-container.profile-tray [data-cid="Link"][href="/profile"]`, pel);
+                profile_button.attr("href", profile_url("view"));
+            }));
+            // User-Context Sidebar
+            $("nav a.profile").attr("href", profile_url("view"));
+        }
+        else {
+            // Profile Show
+            $(".ic-Profile-layout__Secondary").append(/* html */ `
+            <a href="${profile_url("edit")}" class="hide-if-editing Button"><i class="icon-edit"></i> Edit Profile</a>
+        `);
+        }
+        // Settings Page (/profile/settings)
+        $("a.edit_settings_link").off("click").attr("href", profile_url("edit"));
+        $("a.add_contact_link,a.add_email_link").closest("tr").remove();
+        $(".channel_list.email_channels").append(/* html */ `
+        <tr title="">
+            <td colspan="3" style="text-align: center;">
+                <a href="${profile_url("edit")}" class="add_email_link icon-add" title="Add Email Address" aria-label="Add Email Address">Email Address</a>
+            </td>
+        </tr>
+    `);
+        $(".channel_list.other_channels").append(/* html */ `
+        <tr title="">
+            <td colspan="3" style="text-align: center;">
+                <a href="${profile_url("edit")}" class="add_contact_link icon-add" title="Add Contact Method" aria-label="Add Contact Method">Contact Method</a>
+            </td>
+        </tr>
+    `);
+        let interval = 100;
+        const handleInterval = () => {
+            $("a.edit_settings_link,a.add_contact_link,a.add_email_link").off("click");
+            if (interval <= 5000) {
+                setTimeout(handleInterval, interval);
+                interval = interval * 2;
+            }
+        };
+        handleInterval();
+    });
+  })();
+
+  $(window).load(function() {
+    const CONFIG = {
+      tool_domain: 'https://aws-salesforce-int-prod.herokuapp.com'
+    }
+    if (window.location.pathname.indexOf('/login') !== -1) {
+      $('label[for=pseudonym_session_unique_id]').text('Username');
+      $('#login_forgot_password').off('click').on('click', function(e) {
+        e.preventDefault();
+        window.location.href = CONFIG.tool_domain + '/passwordreset';
+      });
+    }
+  });
+
+  $(window).on('pageshow', async function() {
+    var touInputCheck = $('.ic-Login-confirmation__headline')[0]
+    if (!touInputCheck || !(touInputCheck.innerHTML == 'Acceptable Use Policy')) {
+      return;
+    }
+    var touInputLabel = $('input[name="user[terms_of_use]"]')[0].parentNode
+    var touInputLink = $(touInputLabel).find('a')[0]
+    while (!touInputLink) {
+      touInputLabel = $('input[name="user[terms_of_use]"]')[0].parentNode
+      touInputLink = $(touInputLabel).find('a')[0]
+      await new Promise(r => setTimeout(r, 100));
+    }
+    var linkClass = touInputLink.getAttribute('class')
+
+    var instAcceptableUsePolicyLink = `<a href='https://www.instructure.com/policies/acceptable-use' target='_blank' class='${linkClass}'>Acceptable Use Policy</a>`
+    var awsTermsConditionsLink = `<a href='https://aws.amazon.com/legal/learner-terms-conditions/' target='_blank' class='${linkClass}'>AWS Learner Terms and Conditions</a>`
+    var awsPrivacyNoticeLink = `<a href='https://aws.amazon.com/privacy/' target='_blank' class='${linkClass}'>AWS Privacy Notice</a>`
+
+    var bodyCopy = "<p>By clicking Agree, you agree to the Instructure " + instAcceptableUsePolicyLink + " and to the " + awsTermsConditionsLink + ". "
+    bodyCopy += "The information you provide will be handled by AWS as described in the " + awsPrivacyNoticeLink + "."
+
+    var checkboxLabel = "I agree to the " + instAcceptableUsePolicyLink + " and " + awsTermsConditionsLink + "."
+
+    var checkbox = $('input[name="user[terms_of_use]"]')[0]
+
+    touInputLabel.innerHTML = checkbox.outerHTML + checkboxLabel
+
+    var touCopyNode = $(touInputLabel.parentNode).find('p')[1]
+
+    touCopyNode.innerHTML = bodyCopy
+  });
+
+

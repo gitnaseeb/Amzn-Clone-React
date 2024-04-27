@@ -1,0 +1,17 @@
+.order{
+    padding: 40px;
+    margin: 20px 0;
+    border: 1px soild lightgray;
+    background-color: white;
+    position: relative;
+
+}
+.order_id{
+    position: absolute;
+    top: 40px;
+    right: 20px;
+
+}
+h3{
+    text-align: right;
+}

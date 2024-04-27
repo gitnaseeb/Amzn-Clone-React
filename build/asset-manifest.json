@@ -1,0 +1,23 @@
+{
+  "files": {
+    "main.css": "/static/css/main.0993c283.css",
+    "main.js": "/static/js/main.158db194.js",
+    "static/media/alexa.jpg": "/static/media/alexa.ffd9d5eadbe4fba714c1.jpg",
+    "static/media/Amz.jpg": "/static/media/Amz.37e38a1c83060cf8ec40.jpg",
+    "static/media/amazon_PNG11.png": "/static/media/amazon_PNG11.c258172cbbfae08cdc8d.png",
+    "static/media/ads.jpg": "/static/media/ads.b842b1e4bb0cc75ce652.jpg",
+    "static/media/Amazon_log.png": "/static/media/Amazon_log.182c36430a37d8bed634.png",
+    "static/media/ipad.jpg": "/static/media/ipad.f28d075d80bdeaff6712.jpg",
+    "static/media/baking.jpg": "/static/media/baking.ca19a8a9dc7dcfd0167f.jpg",
+    "static/media/watch.jpg": "/static/media/watch.af3ca9b39c86bc4661c5.jpg",
+    "static/media/lean_startup.jpg": "/static/media/lean_startup.b8680214251a3b625588.jpg",
+    "static/media/led.jpg": "/static/media/led.c5284a5a0d3779c3582c.jpg",
+    "index.html": "/index.html",
+    "main.0993c283.css.map": "/static/css/main.0993c283.css.map",
+    "main.158db194.js.map": "/static/js/main.158db194.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.0993c283.css",
+    "static/js/main.158db194.js"
+  ]
+}

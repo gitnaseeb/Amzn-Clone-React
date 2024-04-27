@@ -1,0 +1,35 @@
+.video-js .vjs-seek-button-forward, .video-js .vjs-seek-button-backward{
+    font-family: "Material Icons";
+}
+
+.video-js .vjs-seek-button-forward .vjs-icon-placeholder:before{
+    content: '\e5d5';
+}
+
+.video-js .vjs-seek-button-forward.forward-5 .vjs-icon-placeholder:before{
+    content: '\e058';
+}
+
+.video-js .vjs-seek-button-forward.forward-10 .vjs-icon-placeholder:before{
+    content: '\e056';
+}
+
+.video-js .vjs-seek-button-forward.forward-30 .vjs-icon-placeholder:before{
+    content: '\e057';
+}
+
+.video-js .vjs-seek-button-backward .vjs-icon-placeholder:before{
+    content: '\e042';
+}
+
+.video-js .vjs-seek-button-backward.backward-5 .vjs-icon-placeholder:before{
+    content: '\e05b';
+}
+
+.video-js .vjs-seek-button-backward.backward-10 .vjs-icon-placeholder:before{
+    content: '\e059';
+}
+
+.video-js .vjs-seek-button-backward.backward-30 .vjs-icon-placeholder:before{
+    content: '\e05a';
+}
